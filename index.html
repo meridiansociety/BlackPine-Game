@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Operation Black Pine - One Floor Tactical Base Deluxe</title>
+<title>Operation Black Pine - Ultimate Single File Build</title>
 <style>
 :root{
   --bg:#08111a;
@@ -43,11 +43,11 @@ html,body{
 }
 #topbar{top:14px;align-items:flex-start}
 #bottombar{bottom:14px;align-items:flex-end}
-#objective{padding:12px 14px;min-width:380px;max-width:min(56vw,820px)}
+#objective{padding:12px 14px;min-width:380px;max-width:min(56vw,840px)}
 #objectiveText{margin-top:4px;font-weight:800;font-size:15px;line-height:1.35}
 #stats{padding:10px 12px;display:flex;gap:14px;flex-wrap:wrap}
 #stats .item{display:flex;flex-direction:column;min-width:86px}
-#playerPanel{padding:12px 14px;display:flex;gap:18px;flex-wrap:wrap;min-width:640px}
+#playerPanel{padding:12px 14px;display:flex;gap:18px;flex-wrap:wrap;min-width:690px}
 .playerStat{display:flex;flex-direction:column;min-width:74px}
 #bombPanel{padding:12px 14px;min-width:230px;text-align:right}
 #bombTimer{font-size:24px;font-weight:900;color:var(--warn)}
@@ -67,7 +67,7 @@ html,body{
 }
 #progressWrap{
   position:absolute;left:50%;bottom:16%;transform:translateX(-50%);
-  width:380px;max-width:90vw
+  width:390px;max-width:90vw
 }
 #progressLabel{text-align:center;font-weight:900;letter-spacing:.08em;margin-bottom:7px}
 #progressBar{
@@ -95,7 +95,7 @@ html,body{
   padding:10px 12px;border-radius:12px;background:rgba(8,18,28,.82);
   border:1px solid rgba(150,200,255,.1);font-weight:700
 }
-#damage,#muzzle,#flash,#adsOverlay,#explosionOverlay,#pauseDim{
+#damage,#muzzle,#flash,#adsOverlay,#explosionOverlay,#pauseDim,#lowHealthPulse{
   position:fixed;inset:0;pointer-events:none
 }
 #damage{
@@ -120,6 +120,10 @@ html,body{
   opacity:0;transition:opacity .05s linear
 }
 #pauseDim{background:rgba(4,9,14,.4);opacity:0;transition:opacity .08s ease}
+#lowHealthPulse{
+  background:radial-gradient(circle at center, transparent 45%, rgba(180,0,0,.18) 100%);
+  opacity:0;transition:opacity .12s linear
+}
 #hitMarker{
   position:absolute;left:50%;top:50%;width:48px;height:48px;transform:translate(-50%,-50%);
   opacity:0;pointer-events:none
@@ -130,6 +134,16 @@ html,body{
 #hitMarker:before{transform:translate(-50%,-50%) rotate(45deg)}
 #hitMarker:after{transform:translate(-50%,-50%) rotate(-45deg)}
 #hitMarker.show{opacity:1}
+#damageDir{
+  position:absolute;left:50%;top:50%;width:180px;height:180px;transform:translate(-50%,-50%);
+  opacity:.95
+}
+.dirHit{
+  position:absolute;left:50%;top:50%;width:70px;height:70px;transform-origin:center center;opacity:0;
+  background:linear-gradient(180deg, rgba(255,100,110,.95), rgba(255,100,110,0));
+  clip-path:polygon(50% 0%, 75% 100%, 25% 100%);
+  transition:opacity .12s linear
+}
 .overlay{
   position:fixed;inset:0;display:flex;align-items:center;justify-content:center;
   background:rgba(4,9,14,.72);pointer-events:auto
@@ -181,6 +195,7 @@ button.secondary{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,
       <div class="item"><span class="label">Phase</span><span id="phaseText">INFILTRATE</span></div>
       <div class="item"><span class="label">Area</span><span id="areaText">BASE</span></div>
       <div class="item"><span class="label">Compass</span><span id="compassText">N</span></div>
+      <div class="item"><span class="label">Score</span><span id="scoreText">0</span></div>
     </div>
   </div>
 
@@ -189,6 +204,12 @@ button.secondary{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,
 
   <div id="crosshair"><div id="crosshairDot"></div></div>
   <div id="hitMarker"></div>
+  <div id="damageDir">
+    <div class="dirHit" id="dirFront" style="transform:translate(-50%,-50%) rotate(0deg) translateY(-56px)"></div>
+    <div class="dirHit" id="dirRight" style="transform:translate(-50%,-50%) rotate(90deg) translateY(-56px)"></div>
+    <div class="dirHit" id="dirBack" style="transform:translate(-50%,-50%) rotate(180deg) translateY(-56px)"></div>
+    <div class="dirHit" id="dirLeft" style="transform:translate(-50%,-50%) rotate(270deg) translateY(-56px)"></div>
+  </div>
 
   <div id="centerPrompt" class="panel">Click inside the game to lock the mouse.</div>
 
@@ -207,6 +228,7 @@ button.secondary{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,
       <div class="playerStat"><span class="label">Ammo</span><span id="ammo">30 / 120</span></div>
       <div class="playerStat"><span class="label">Stance</span><span id="stanceText">STAND</span></div>
       <div class="playerStat"><span class="label">ADS</span><span id="adsText">OFF</span></div>
+      <div class="playerStat"><span class="label">Elims</span><span id="killsText">0</span></div>
     </div>
     <div id="bombPanel" class="panel">
       <div id="bombStatus">Charge not planted</div>
@@ -222,11 +244,12 @@ button.secondary{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,
 <div id="adsOverlay"></div>
 <div id="explosionOverlay"></div>
 <div id="pauseDim"></div>
+<div id="lowHealthPulse"></div>
 
 <div id="intro" class="overlay">
   <div class="card">
     <h1>OPERATION BLACK PINE</h1>
-    <p>Single-player tactical browser FPS. Infiltrate a fortified one-floor forest base, breach the structure, plant the demolition charge in the hardpoint room, and survive until detonation.</p>
+    <p>Single-player tactical browser FPS. Infiltrate a fortified forest base, breach the structure, plant the demolition charge in the hardpoint room, and survive until detonation.</p>
     <div id="introGrid">
       <div class="introCell"><strong>WASD</strong> move &nbsp; <strong>Shift</strong> sprint</div>
       <div class="introCell"><strong>Mouse</strong> aim &nbsp; <strong>Click</strong> fire</div>
@@ -251,9 +274,10 @@ button.secondary{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,
 </div>
 
 <div id="endScreen" class="overlay hidden">
-  <div class="card" style="max-width:520px">
+  <div class="card" style="max-width:560px">
     <h2 id="endTitle">Mission Complete</h2>
     <p id="endMessage"></p>
+    <p id="endStats"></p>
     <div class="btnRow"><button onclick="location.reload()">Restart Mission</button></div>
   </div>
 </div>
@@ -264,12 +288,22 @@ button.secondary{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,
 (() => {
 'use strict';
 
+// ================= CONFIG =================
+const CONFIG = {
+  playerSpeed: 2.55,
+  sprintSpeed: 3.65,
+  mouseSensitivity: 0.00145,
+  missionTime: 15*60,
+  plantTime: 4.9,
+  bombTime: 58,
+  defuseTime: 6.2
+};
+
 // ================= UI / CANVAS =================
 const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
 const minimap = document.getElementById('minimap');
 const mctx = minimap.getContext('2d');
-
 const ui = {
   objectiveText: document.getElementById('objectiveText'),
   missionTime: document.getElementById('missionTime'),
@@ -277,12 +311,14 @@ const ui = {
   phaseText: document.getElementById('phaseText'),
   areaText: document.getElementById('areaText'),
   compassText: document.getElementById('compassText'),
+  scoreText: document.getElementById('scoreText'),
   health: document.getElementById('health'),
   armor: document.getElementById('armor'),
   weaponName: document.getElementById('weaponName'),
   ammo: document.getElementById('ammo'),
   stanceText: document.getElementById('stanceText'),
   adsText: document.getElementById('adsText'),
+  killsText: document.getElementById('killsText'),
   bombStatus: document.getElementById('bombStatus'),
   bombTimer: document.getElementById('bombTimer'),
   centerPrompt: document.getElementById('centerPrompt'),
@@ -297,16 +333,21 @@ const ui = {
   adsOverlay: document.getElementById('adsOverlay'),
   explosionOverlay: document.getElementById('explosionOverlay'),
   pauseDim: document.getElementById('pauseDim'),
+  lowHealthPulse: document.getElementById('lowHealthPulse'),
   hitMarker: document.getElementById('hitMarker'),
   intro: document.getElementById('intro'),
   pauseMenu: document.getElementById('pauseMenu'),
   endScreen: document.getElementById('endScreen'),
   endTitle: document.getElementById('endTitle'),
   endMessage: document.getElementById('endMessage'),
+  endStats: document.getElementById('endStats'),
   feed: document.getElementById('feed'),
-  testStatus: document.getElementById('testStatus')
+  testStatus: document.getElementById('testStatus'),
+  dirFront: document.getElementById('dirFront'),
+  dirRight: document.getElementById('dirRight'),
+  dirBack: document.getElementById('dirBack'),
+  dirLeft: document.getElementById('dirLeft')
 };
-
 const DPR = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
 function resize(){
   canvas.width = Math.floor(window.innerWidth * DPR);
@@ -314,7 +355,6 @@ function resize(){
   canvas.style.width = window.innerWidth + 'px';
   canvas.style.height = window.innerHeight + 'px';
   ctx.setTransform(DPR,0,0,DPR,0,0);
-
   minimap.width = Math.floor(190 * DPR);
   minimap.height = Math.floor(190 * DPR);
   mctx.setTransform(DPR,0,0,DPR,0,0);
@@ -337,13 +377,11 @@ function tone(freq=440,dur=0.06,type='square',vol=0.03){
   o.type = type;
   o.frequency.value = freq;
   g.gain.value = vol;
-  o.connect(g);
-  g.connect(audioCtx.destination);
+  o.connect(g); g.connect(audioCtx.destination);
   const now = audioCtx.currentTime;
   g.gain.setValueAtTime(vol, now);
   g.gain.exponentialRampToValueAtTime(0.0001, now + dur);
-  o.start(now);
-  o.stop(now + dur);
+  o.start(now); o.stop(now + dur);
 }
 const audioHooks = {
   shotRifle(){ tone(190,.05,'sawtooth',.022); tone(92,.07,'triangle',.018); },
@@ -389,23 +427,6 @@ function showAlert(text,dur=1){
 function hideAlert(){ ui.alertBar.classList.add('hidden'); }
 
 // ================= MAP =================
-// # wall
-// . floor
-// T tree
-// F fence
-// C crate
-// S sandbag / storage
-// D door
-// w window
-// B bomb site
-// A ammo
-// M medkit
-// R armor
-// G generator
-// V vehicle
-// O office table
-// K kitchen block
-// L lockers
 const MAP = [
 '####################################',
 '#..T....T.....T........T..........##',
@@ -437,7 +458,6 @@ const MAP = [
 ];
 const W = 36, H = 27;
 const AREA_NAME = 'BASE';
-
 const brokenWindows = new Set();
 function mapKey(x,y){ return `${x}:${y}`; }
 function tileAt(x,y){
@@ -446,15 +466,9 @@ function tileAt(x,y){
   if(t==='w' && brokenWindows.has(mapKey(x,y))) return '.';
   return t;
 }
-
 const doors = [];
-for(let y=0; y<H; y++){
-  for(let x=0; x<W; x++){
-    if(MAP[y][x]==='D') doors.push({x,y,open:0,opening:false});
-  }
-}
+for(let y=0; y<H; y++) for(let x=0; x<W; x++) if(MAP[y][x]==='D') doors.push({x,y,open:0,opening:false});
 function doorAt(x,y){ return doors.find(d => d.x===x && d.y===y) || null; }
-
 function isSolid(x,y){
   const t = tileAt(x,y);
   if(t==='#' || t==='T' || t==='F' || t==='C' || t==='S' || t==='G' || t==='V' || t==='O' || t==='K' || t==='L') return true;
@@ -528,36 +542,32 @@ function bfsPath(startNode,endNode){
 }
 function lineBlocked(x1,y1,x2,y2){ return lineBlockedStatic(x1,y1,x2,y2); }
 
-// ================= PLAYER / WEAPONS =================
+// ================= PLAYER / STATE =================
 const player = {
   x:2.5,y:23.5,a:-.12,fov:Math.PI/3,
-  speed:2.55,sprint:3.65,radius:.18,rotSpeed:.00145,
+  speed:CONFIG.playerSpeed,sprint:CONFIG.sprintSpeed,radius:.18,rotSpeed:CONFIG.mouseSensitivity,
   health:100,armor:50,regenDelay:0,moving:false,crouch:false,ads:false,dead:false,weapon:'rifle',
   recoil:0,bob:0,zVel:0,zPos:0,onGround:true
 };
-
 const weapons = {
   rifle:{name:'MX-17 Rifle',mag:30,ammo:30,reserve:120,damage:24,fireRate:.1,range:18,auto:true,reload:1.8,spread:.018,recoil:.04},
   pistol:{name:'PX-9 Sidearm',mag:14,ammo:14,reserve:42,damage:19,fireRate:.22,range:12,auto:false,reload:1.15,spread:.028,recoil:.022}
 };
-
 const state = {
-  started:false,paused:false,missionTime:15*60,phase:'INFILTRATE',planted:false,bombTimer:58,result:null,
+  started:false,paused:false,missionTime:CONFIG.missionTime,phase:'INFILTRATE',planted:false,bombTimer:CONFIG.bombTime,result:null,
   shotCooldown:0,reloadTimer:0,fireLatch:false,semiLatch:false,damageFlash:0,muzzleFlash:0,
-  whiteFlash:0,hitMarker:0,defuseEnemy:null,alertTimer:0,beeper:0,feed:[],explosionT:0
+  whiteFlash:0,hitMarker:0,defuseEnemy:null,alertTimer:0,beeper:0,feed:[],explosionT:0,
+  score:0,kills:0,dirFront:0,dirRight:0,dirBack:0,dirLeft:0
 };
-
 const bombSite = {x:16.5,y:9.5,r:.9};
 
 // ================= PICKUPS =================
 const pickups = [];
-for(let y=0; y<H; y++){
-  for(let x=0; x<W; x++){
-    const t = MAP[y][x];
-    if(t==='A') pickups.push({type:'ammo',x:x+.5,y:y+.5,active:true});
-    if(t==='M') pickups.push({type:'medkit',x:x+.5,y:y+.5,active:true});
-    if(t==='R') pickups.push({type:'armor',x:x+.5,y:y+.5,active:true});
-  }
+for(let y=0; y<H; y++) for(let x=0; x<W; x++){
+  const t = MAP[y][x];
+  if(t==='A') pickups.push({type:'ammo',x:x+.5,y:y+.5,active:true});
+  if(t==='M') pickups.push({type:'medkit',x:x+.5,y:y+.5,active:true});
+  if(t==='R') pickups.push({type:'armor',x:x+.5,y:y+.5,active:true});
 }
 
 // ================= ENEMIES =================
@@ -571,7 +581,6 @@ function mkEnemy(x,y,role){
     targetX:x,targetY:y,
     fireCd:Math.random()*.4,
     searchT:0,
-    reaction:.18+Math.random()*.26,
     dead:false,
     defuseT:0,
     dir:Math.random()*Math.PI*2,
@@ -604,7 +613,6 @@ window.addEventListener('keydown',e=>{
   if(e.code==='Digit2') player.weapon='pistol';
   if(e.code==='KeyR') startReload();
   if(e.code==='ControlLeft' || e.code==='ControlRight' || e.code==='KeyC') player.crouch = true;
-
   if(e.code==='Escape' && state.started && !state.result){
     state.paused = true;
     document.exitPointerLock?.();
@@ -632,14 +640,12 @@ window.addEventListener('mouseup',e=>{
   if(e.button===2) player.ads = false;
 });
 window.addEventListener('contextmenu',e=>e.preventDefault());
-
 document.addEventListener('pointerlockchange',()=>{
   if(!document.pointerLockElement && state.started && !state.result && !state.paused){
     state.paused = true;
     showPause(true);
   }
 });
-
 document.getElementById('startBtn').addEventListener('click',()=>{
   ensureAudio();
   state.started = true;
@@ -649,20 +655,17 @@ document.getElementById('startBtn').addEventListener('click',()=>{
   pushFeed('Mission started');
   canvas.requestPointerLock?.();
 });
-
 document.getElementById('resumeBtn').addEventListener('click',()=>{
   state.paused = false;
   showPause(false);
   canvas.requestPointerLock?.();
 });
-
 canvas.addEventListener('click',()=>{
   if(!state.started || state.result || state.paused) return;
   ensureAudio();
   canvas.requestPointerLock?.();
   ui.banner.classList.add('hidden');
 });
-
 function showPause(show){
   ui.pauseMenu.classList.toggle('hidden', !show);
   ui.pauseDim.style.opacity = show ? .95 : 0;
@@ -675,7 +678,6 @@ function nearestDoorForPlayer(){
   }
   return null;
 }
-
 function tryMove(nx,ny){
   const r = player.radius;
   if(
@@ -684,7 +686,6 @@ function tryMove(nx,ny){
     !isSolid(Math.floor(nx-r),Math.floor(player.y+r)) &&
     !isSolid(Math.floor(nx+r),Math.floor(player.y+r))
   ) player.x = nx;
-
   if(
     !isSolid(Math.floor(player.x-r),Math.floor(ny-r)) &&
     !isSolid(Math.floor(player.x+r),Math.floor(ny-r)) &&
@@ -692,7 +693,6 @@ function tryMove(nx,ny){
     !isSolid(Math.floor(player.x+r),Math.floor(ny+r))
   ) player.y = ny;
 }
-
 function moveEnemyToward(e,tx,ty,dt,speed=1.45){
   const dx = tx-e.x, dy = ty-e.y, len = Math.hypot(dx,dy);
   if(len<.02) return;
@@ -701,7 +701,6 @@ function moveEnemyToward(e,tx,ty,dt,speed=1.45){
   if(!isSolid(Math.floor(nx),Math.floor(e.y))) e.x = nx;
   if(!isSolid(Math.floor(e.x),Math.floor(ny))) e.y = ny;
 }
-
 function startReload(){
   const w = weapons[player.weapon];
   if(state.reloadTimer>0 || w.ammo>=w.mag || w.reserve<=0) return;
@@ -709,7 +708,6 @@ function startReload(){
   pushFeed(`Reloading ${w.name}`);
   audioHooks.reload();
 }
-
 function damageWindow(x,y){
   if(MAP[y] && MAP[y][x]==='w'){
     brokenWindows.add(mapKey(x,y));
@@ -718,7 +716,6 @@ function damageWindow(x,y){
   }
   return false;
 }
-
 function castRay(angle){
   const dx = Math.cos(angle), dy = Math.sin(angle);
   let dist = 0;
@@ -739,13 +736,18 @@ function castRay(angle){
   }
   return {dist:30,tile:'#',tx:0,ty:0};
 }
-
+function damageDirection(fromX, fromY){
+  const ang = normalizeAngle(Math.atan2(fromY-player.y, fromX-player.x) - player.a);
+  if(Math.abs(ang) < Math.PI/4) state.dirFront = 0.8;
+  else if(ang > Math.PI/4 && ang < 3*Math.PI/4) state.dirRight = 0.8;
+  else if(ang < -Math.PI/4 && ang > -3*Math.PI/4) state.dirLeft = 0.8;
+  else state.dirBack = 0.8;
+}
 function shootEnemyHitEffects(){
   state.hitMarker = .12;
   ui.hitMarker.classList.add('show');
   audioHooks.hit();
 }
-
 function alertNearbyEnemies(x,y,radius=10){
   for(const e of enemies){
     if(e.dead) continue;
@@ -758,7 +760,6 @@ function alertNearbyEnemies(x,y,radius=10){
     }
   }
 }
-
 function shoot(){
   const w = weapons[player.weapon];
   if(state.shotCooldown>0 || state.reloadTimer>0) return;
@@ -804,6 +805,8 @@ function shoot(){
     shootEnemyHitEffects();
     if(best.e.hp<=0){
       best.e.dead = true;
+      state.kills++;
+      state.score += 100;
       pushFeed('Enemy eliminated');
     }
   } else {
@@ -813,8 +816,7 @@ function shoot(){
 
   alertNearbyEnemies(player.x,player.y,10);
 }
-
-function damagePlayer(amount){
+function damagePlayer(amount, fromX, fromY){
   let remain = amount;
   if(player.armor>0){
     const absorbed = Math.min(player.armor, remain*.62);
@@ -825,14 +827,13 @@ function damagePlayer(amount){
   player.regenDelay = 3.1;
   state.damageFlash = Math.min(.9,state.damageFlash+amount*.014);
   state.whiteFlash = .06;
+  if(fromX!=null && fromY!=null) damageDirection(fromX, fromY);
   showAlert('TAKING FIRE',.32);
 }
-
 function computeEnemyPath(e, tx, ty){
   const start = nearestNode(e.x,e.y), end = nearestNode(tx,ty);
   return bfsPath(start,end);
 }
-
 function findNearestCover(e, px, py){
   const candidates = [];
   for(let y=1;y<H-1;y++){
@@ -852,7 +853,6 @@ function findNearestCover(e, px, py){
   candidates.sort((a,b)=>a.d-b.d);
   return candidates[0];
 }
-
 function followPath(e, dt, speed){
   if(!e.path || !e.path.length) return false;
   const target = e.path[0];
@@ -860,7 +860,6 @@ function followPath(e, dt, speed){
   if(dist2(e.x,e.y,target.x,target.y)<.35) e.path.shift();
   return true;
 }
-
 function updateEnemy(e,dt){
   if(e.dead) return;
 
@@ -888,12 +887,10 @@ function updateEnemy(e,dt){
       moveEnemyToward(e,tx,ty,dt,1.0);
       break;
     }
-
     case 'guard': {
       if(state.planted) e.state='defend';
       break;
     }
-
     case 'search': {
       e.searchT -= dt;
       if(!e.path.length || Math.random()<.01) e.path = computeEnemyPath(e,e.targetX,e.targetY);
@@ -901,7 +898,6 @@ function updateEnemy(e,dt){
       if(e.searchT<=0 && !state.planted) e.state = e.role==='patrol' ? 'patrol' : 'guard';
       break;
     }
-
     case 'takeCover': {
       if(e.coverX==null){
         const c = findNearestCover(e,player.x,player.y);
@@ -914,7 +910,6 @@ function updateEnemy(e,dt){
       }
       break;
     }
-
     case 'defend': {
       const db = dist2(e.x,e.y,bombSite.x,bombSite.y);
       if(db>.85){
@@ -925,7 +920,6 @@ function updateEnemy(e,dt){
       }
       break;
     }
-
     case 'defuse': {
       if(!state.planted){ e.state='guard'; break; }
       const db = dist2(e.x,e.y,bombSite.x,bombSite.y);
@@ -935,7 +929,7 @@ function updateEnemy(e,dt){
           e.defuseT += dt;
           state.defuseEnemy = e;
           if(Math.random()<.06) audioHooks.defuse();
-          if(e.defuseT>=6.2){
+          if(e.defuseT>=CONFIG.defuseTime){
             endGame(false,'Enemy forces defused the charge.');
             return;
           }
@@ -946,7 +940,6 @@ function updateEnemy(e,dt){
       }
       break;
     }
-
     case 'attack': {
       e.fireCd -= dt;
       if(e.hp<30 && Math.random()<.008){
@@ -972,7 +965,7 @@ function updateEnemy(e,dt){
         if(e.fireCd<=0){
           const accRole = e.role==='overwatch' ? .68 : e.role==='interior' ? .62 : .56;
           const hitChance = Math.max(.18, accRole - dp*.05);
-          if(Math.random()<hitChance) damagePlayer((e.role==='overwatch'?12:10)+Math.random()*4);
+          if(Math.random()<hitChance) damagePlayer((e.role==='overwatch'?12:10)+Math.random()*4, e.x, e.y);
           e.fireCd = .42 + Math.random()*.45;
         }
       } else {
@@ -985,7 +978,6 @@ function updateEnemy(e,dt){
     }
   }
 }
-
 function updatePickups(){
   for(const p of pickups){
     if(!p.active) continue;
@@ -994,19 +986,21 @@ function updatePickups(){
       if(p.type==='ammo'){
         weapons.rifle.reserve+=45;
         weapons.pistol.reserve+=18;
+        state.score += 15;
         pushFeed('Ammo collected');
       } else if(p.type==='medkit'){
         player.health = Math.min(100,player.health+34);
+        state.score += 20;
         pushFeed('Medkit used');
       } else if(p.type==='armor'){
         player.armor = Math.min(100,player.armor+40);
+        state.score += 20;
         pushFeed('Armor plates acquired');
       }
       audioHooks.pickup();
     }
   }
 }
-
 function spawnReinforcements(){
   const reinforcements = [
     mkEnemy(28.5,22.5,'reinforcement'),
@@ -1019,7 +1013,6 @@ function spawnReinforcements(){
   pushFeed('Enemy reinforcements inbound');
   audioHooks.alert();
 }
-
 let interactionHold = 0;
 function updateInteraction(dt){
   ui.centerPrompt.classList.add('hidden');
@@ -1058,17 +1051,18 @@ function updateInteraction(dt){
     ui.progressWrap.classList.remove('hidden');
     ui.progressLabel.textContent='PLANTING';
     ui.progressFill.style.background='linear-gradient(90deg,#3ca7ff,#86ffc0)';
-    ui.progressFill.style.width=(Math.min(1,interactionHold/4.9)*100)+'%';
-    if(interactionHold>=4.9){
+    ui.progressFill.style.width=(Math.min(1,interactionHold/CONFIG.plantTime)*100)+'%';
+    if(interactionHold>=CONFIG.plantTime){
       state.planted=true;
       state.phase='POST-PLANT';
-      state.bombTimer=58;
+      state.bombTimer=CONFIG.bombTime;
       interactionHold=0;
       ui.progressWrap.classList.add('hidden');
       showAlert('CHARGE PLANTED',1.2);
       pushFeed('Demolition charge planted');
       audioHooks.plant();
       state.whiteFlash=.1;
+      state.score += 200;
       spawnReinforcements();
     }
   } else if(mode==='plant'){
@@ -1076,24 +1070,22 @@ function updateInteraction(dt){
     if(interactionHold<=.02) ui.progressWrap.classList.add('hidden');
   }
 }
-
 function updateDoors(dt){
   for(const d of doors){
     if(d.opening) d.open = Math.min(1,d.open + dt*1.6);
   }
 }
-
 function endGame(victory,message){
   if(state.result) return;
   state.result = victory ? 'victory' : 'defeat';
   ui.endTitle.textContent = victory ? 'Mission Complete' : 'Mission Failed';
   ui.endMessage.textContent = message;
+  ui.endStats.textContent = `Eliminations: ${state.kills} | Score: ${state.score} | Time Left: ${formatTime(state.missionTime)}`;
   ui.endScreen.classList.remove('hidden');
   document.exitPointerLock?.();
   if(victory){ state.explosionT=.9; audioHooks.victory(); }
   else audioHooks.defeat();
 }
-
 function update(dt){
   if(!state.started || state.result || state.paused) return;
 
@@ -1109,6 +1101,15 @@ function update(dt){
     state.hitMarker -= dt*7;
     if(state.hitMarker<=0) ui.hitMarker.classList.remove('show');
   }
+
+  state.dirFront = Math.max(0, state.dirFront - dt*2.7);
+  state.dirRight = Math.max(0, state.dirRight - dt*2.7);
+  state.dirBack = Math.max(0, state.dirBack - dt*2.7);
+  state.dirLeft = Math.max(0, state.dirLeft - dt*2.7);
+  ui.dirFront.style.opacity = state.dirFront;
+  ui.dirRight.style.opacity = state.dirRight;
+  ui.dirBack.style.opacity = state.dirBack;
+  ui.dirLeft.style.opacity = state.dirLeft;
 
   if(state.damageFlash>0){
     state.damageFlash = Math.max(0,state.damageFlash-dt*2.2);
@@ -1126,6 +1127,7 @@ function update(dt){
   } else ui.flash.style.opacity = 0;
 
   ui.adsOverlay.style.opacity = player.ads ? .92 : 0;
+  ui.lowHealthPulse.style.opacity = player.health < 35 ? (0.18 + Math.sin(performance.now()*0.008)*0.08) : 0;
 
   if(state.explosionT>0){
     state.explosionT = Math.max(0,state.explosionT-dt);
@@ -1166,6 +1168,7 @@ function update(dt){
     }
     if(state.bombTimer<=0){
       state.whiteFlash=.25;
+      state.score += 500;
       endGame(true,'Charge detonated. Target destroyed. You survived the operation.');
       return;
     }
@@ -1250,7 +1253,6 @@ function wallColor(tile,shade){
   if(tile==='L') return `rgb(${Math.floor(shade*.52)},${Math.floor(shade*.56)},${Math.floor(shade*.60)})`;
   return `rgb(${shade},${shade},${shade})`;
 }
-
 function drawSkyGround(w,h){
   const verticalBase = player.crouch ? 12 : 0;
   const bob = player.moving ? Math.sin(player.bob)*3 : 0;
@@ -1299,7 +1301,6 @@ function drawSkyGround(w,h){
   ctx.fillStyle = !indoor ? 'rgba(120,150,170,.09)' : 'rgba(0,0,0,.05)';
   ctx.fillRect(0,0,w,h);
 }
-
 function drawWorld(){
   const w=window.innerWidth,h=window.innerHeight;
   drawSkyGround(w,h);
@@ -1351,7 +1352,6 @@ function drawWorld(){
     }
   }
 }
-
 function drawEnemyBillboard(sx, sy, size, role){
   const bodyW = size * .48;
   const bodyH = size * .84;
@@ -1400,7 +1400,6 @@ function drawEnemyBillboard(sx, sy, size, role){
   ctx.arc(sx, sy - size*.23, headR*1.08, Math.PI, Math.PI*2);
   ctx.fill();
 }
-
 function drawPickupShape(sx, sy, size, type){
   if(type==='ammo'){
     ctx.fillStyle='#d0a342';
@@ -1425,7 +1424,6 @@ function drawPickupShape(sx, sy, size, type){
     ctx.fillRect(sx-size*.05, sy-size*.18, size*.10, size*.36);
   }
 }
-
 function projectSprite(s){
   const dx=s.x-player.x, dy=s.y-player.y, dist=Math.hypot(dx,dy);
   const currentFov=player.ads?player.fov*.78:player.fov;
@@ -1446,11 +1444,9 @@ function projectSprite(s){
   const wallDepth=depthBuffer[rayIndex] ?? 999;
   if(dist>wallDepth+.1) return;
 
-  if(s.enemy){
-    drawEnemyBillboard(sx, sy, size*1.55, s.role);
-  } else if(s.pickupType){
-    drawPickupShape(sx, sy, size*.95, s.pickupType);
-  } else {
+  if(s.enemy) drawEnemyBillboard(sx, sy, size*1.55, s.role);
+  else if(s.pickupType) drawPickupShape(sx, sy, size*.95, s.pickupType);
+  else {
     ctx.fillStyle=s.color;
     ctx.fillRect(sx-size/2,sy-size/2,size,size);
   }
@@ -1463,15 +1459,13 @@ function projectSprite(s){
     ctx.stroke();
   }
 }
-
 function drawSprites(){
   const sprites=[];
 
   for(const p of pickups){
     if(!p.active) continue;
     sprites.push({
-      x:p.x,y:p.y,size:.42,pulse:true,
-      pickupType:p.type,
+      x:p.x,y:p.y,size:.42,pulse:true,pickupType:p.type,
       color:p.type==='ammo' ? '#ffd86b' : p.type==='armor' ? '#7fd6ff' : '#86ffc0'
     });
   }
@@ -1496,10 +1490,8 @@ function drawSprites(){
     const db=dist2(player.x,player.y,b.x,b.y);
     return db-da;
   });
-
   for(const s of sprites) projectSprite(s);
 }
-
 function drawHand(x,y,w,h,flip=1){
   ctx.fillStyle='#44515d';
   ctx.beginPath();
@@ -1519,7 +1511,6 @@ function drawHand(x,y,w,h,flip=1){
   ctx.closePath();
   ctx.fill();
 }
-
 function drawWeapon(){
   const w=window.innerWidth, h=window.innerHeight;
   const bobX=player.moving?Math.sin(player.bob*.5)*7:0;
@@ -1536,7 +1527,6 @@ function drawWeapon(){
     drawHand(baseX+w*.02, baseY+h*.10, w*.11, h*.11, 1);
     drawHand(baseX+w*.24, baseY+h*.06, w*.09, h*.09, -1);
 
-    // stock
     ctx.fillStyle='#2d3740';
     ctx.beginPath();
     ctx.moveTo(baseX+w*.01, baseY+h*.05);
@@ -1546,7 +1536,6 @@ function drawWeapon(){
     ctx.closePath();
     ctx.fill();
 
-    // stock bottom face
     ctx.fillStyle='#202932';
     ctx.beginPath();
     ctx.moveTo(baseX+w*.06, baseY+h*.11);
@@ -1556,7 +1545,6 @@ function drawWeapon(){
     ctx.closePath();
     ctx.fill();
 
-    // receiver top
     ctx.fillStyle='#2b3640';
     ctx.beginPath();
     ctx.moveTo(baseX+w*.10, baseY+h*.02);
@@ -1566,7 +1554,6 @@ function drawWeapon(){
     ctx.closePath();
     ctx.fill();
 
-    // receiver side
     ctx.fillStyle='#1c242c';
     ctx.beginPath();
     ctx.moveTo(baseX+w*.14, baseY+h*.08);
@@ -1576,7 +1563,6 @@ function drawWeapon(){
     ctx.closePath();
     ctx.fill();
 
-    // handguard top
     ctx.fillStyle='#232d36';
     ctx.beginPath();
     ctx.moveTo(baseX+w*.29, baseY+h*.035);
@@ -1586,7 +1572,6 @@ function drawWeapon(){
     ctx.closePath();
     ctx.fill();
 
-    // handguard side
     ctx.fillStyle='#171f26';
     ctx.beginPath();
     ctx.moveTo(baseX+w*.31, baseY+h*.065);
@@ -1596,7 +1581,6 @@ function drawWeapon(){
     ctx.closePath();
     ctx.fill();
 
-    // barrel
     ctx.fillStyle='#10161c';
     ctx.beginPath();
     ctx.moveTo(baseX+w*.43, baseY+h*.046);
@@ -1606,15 +1590,12 @@ function drawWeapon(){
     ctx.closePath();
     ctx.fill();
 
-    // front sight
     ctx.fillStyle='#36414c';
     ctx.fillRect(baseX+w*.45, baseY+h*.022, w*.008, h*.025);
 
-    // rail
     ctx.fillStyle='#121920';
     ctx.fillRect(baseX+w*.14, baseY+h*.018, w*.15, h*.010);
 
-    // scope
     ctx.fillStyle='#181f27';
     ctx.beginPath();
     ctx.moveTo(baseX+w*.17, baseY-h*.002);
@@ -1624,15 +1605,12 @@ function drawWeapon(){
     ctx.closePath();
     ctx.fill();
 
-    // scope tube
     ctx.fillStyle='#2c3741';
     ctx.fillRect(baseX+w*.195, baseY-h*.018, w*.035, h*.011);
 
-    // magwell
     ctx.fillStyle='#1a232b';
     ctx.fillRect(baseX+w*.19, baseY+h*.088, w*.028, h*.035);
 
-    // mag
     ctx.fillStyle='#323b43';
     ctx.beginPath();
     ctx.moveTo(baseX+w*.19, baseY+h*.12);
@@ -1642,7 +1620,6 @@ function drawWeapon(){
     ctx.closePath();
     ctx.fill();
 
-    // grip
     ctx.fillStyle='#1a232b';
     ctx.beginPath();
     ctx.moveTo(baseX+w*.145, baseY+h*.10);
@@ -1652,7 +1629,6 @@ function drawWeapon(){
     ctx.closePath();
     ctx.fill();
 
-    // highlights
     ctx.fillStyle='rgba(255,255,255,.08)';
     ctx.fillRect(baseX+w*.14, baseY+h*.025, w*.14, 2);
     ctx.fillStyle='rgba(0,0,0,.18)';
@@ -1722,7 +1698,6 @@ function drawWeapon(){
     ctx.fill();
   }
 }
-
 function drawOverlay(){
   const w=window.innerWidth,h=window.innerHeight;
   const vg=ctx.createRadialGradient(w/2,h/2,Math.min(w,h)*.2,w/2,h/2,Math.max(w,h)*.66);
@@ -1731,7 +1706,6 @@ function drawOverlay(){
   ctx.fillStyle=vg;
   ctx.fillRect(0,0,w,h);
 }
-
 function drawMinimap(){
   const size=190;
   mctx.clearRect(0,0,size,size);
@@ -1739,7 +1713,6 @@ function drawMinimap(){
   mctx.fillRect(0,0,size,size);
 
   const scale=5.1, offX=size/2-player.x*scale, offY=size/2-player.y*scale;
-
   for(let y=0;y<H;y++){
     for(let x=0;x<W;x++){
       const t=tileAt(x,y);
@@ -1794,7 +1767,6 @@ function drawMinimap(){
   mctx.lineTo(size/2+Math.cos(player.a)*10, size/2+Math.sin(player.a)*10);
   mctx.stroke();
 }
-
 function draw(){
   if(!state.started) return;
   drawWorld();
@@ -1804,7 +1776,6 @@ function draw(){
   drawMinimap();
   document.getElementById('crosshair').style.transform = `translate(-50%,-50%) scale(${player.moving?1.08:1})`;
 }
-
 function updateUI(){
   const w=weapons[player.weapon];
   ui.missionTime.textContent = formatTime(state.missionTime);
@@ -1812,12 +1783,16 @@ function updateUI(){
   ui.phaseText.textContent = state.phase;
   ui.areaText.textContent = AREA_NAME;
   ui.compassText.textContent = compassLabel(player.a);
+  ui.scoreText.textContent = state.score;
   ui.health.textContent = Math.max(0,Math.round(player.health));
   ui.armor.textContent = Math.max(0,Math.round(player.armor));
   ui.weaponName.textContent = w.name;
   ui.ammo.textContent = state.reloadTimer>0 ? `RELOADING... ${w.ammo} / ${w.reserve}` : `${w.ammo} / ${w.reserve}`;
   ui.stanceText.textContent = player.crouch ? 'CROUCH' : (keys['ShiftLeft']||keys['ShiftRight'])&&player.moving ? 'SPRINT' : 'STAND';
   ui.adsText.textContent = player.ads ? 'ON' : 'OFF';
+  ui.killsText.textContent = state.kills;
+
+  if(w.ammo <= Math.max(4, Math.floor(w.mag*0.2)) && state.reloadTimer<=0) showAlert('LOW AMMO', .1);
 
   if(!state.planted){
     ui.bombStatus.textContent='Charge not planted';
@@ -1834,7 +1809,7 @@ function updateUI(){
     ui.progressWrap.classList.remove('hidden');
     ui.progressLabel.textContent='ENEMY DEFUSING';
     ui.progressFill.style.background='linear-gradient(90deg,#ffab6e,#ff5f71)';
-    ui.progressFill.style.width=(Math.min(1,state.defuseEnemy.defuseT/6.2)*100)+'%';
+    ui.progressFill.style.width=(Math.min(1,state.defuseEnemy.defuseT/CONFIG.defuseTime)*100)+'%';
     showAlert('DEFUSE IN PROGRESS',.2);
   }
 }
@@ -1847,15 +1822,12 @@ function runSelfTests(){
   ok('map loaded', MAP.length===27);
   ok('doors parsed', doors.length>=4);
   ok('nav nodes built', navNodes.length>20);
-
   const n1=nearestNode(2.5,23.5), n2=nearestNode(16.5,9.5);
   ok('path exists spawn to site', bfsPath(n1,n2).length>2);
-
   damageWindow(17,11);
   ok('window breaks', brokenWindows.has('17:11'));
-
-  state.planted=false; state.bombTimer=58; state.result=null;
-  ok('bomb reset', state.planted===false && state.bombTimer===58);
+  state.planted=false; state.bombTimer=CONFIG.bombTime; state.result=null;
+  ok('bomb reset', state.planted===false && state.bombTimer===CONFIG.bombTime);
 
   const report=tests.map(t=>`${t.cond?'PASS':'FAIL'} ${t.name}`).join(' | ');
   ui.testStatus.style.display='block';
